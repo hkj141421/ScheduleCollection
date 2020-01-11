@@ -2,13 +2,8 @@ package com.knight.Util;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.knight.Bean.lrc;
-import com.knight.Bean.musicbaseinfo;
-import com.knight.Bean.relationship;
-import com.knight.Service.HttpService;
-import com.knight.Service.LrcService;
-import com.knight.Service.MusicService;
-import com.knight.Service.RelationShipService;
+import com.knight.Bean.*;
+import com.knight.Service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +27,9 @@ public class JsonDataUtil {
 
     @Autowired
     private RelationShipService relationShipService;
+
+    @Autowired
+    private SongSheetService infoService;
 
     public boolean parseRecomSongsData(JSONObject data)
     {
@@ -86,8 +84,8 @@ public class JsonDataUtil {
         lrc l=new lrc();
         l.setLrcname(name);
         l.setContent(text);
-
-        lrcService.addLrc(l);
+        System.out.println("歌词"+name);
+//        lrcService.addLrc(l);
 
         return l.getLrcid();
     }
@@ -174,6 +172,67 @@ public class JsonDataUtil {
        }
 
        return null;
+    }
+
+    public boolean parseRecomSheetData(JSONObject data)
+    {
+        JSONArray sheet=data.getJSONArray("recommend");
+
+        for (Object o:sheet) {
+            JSONObject item= (JSONObject) o;
+            if(infoService.IsExist(item.getString("name"),item.getJSONObject("creator").getString("nickname"))) {
+                System.out.println("跳过歌单ID："+item.getString("id"));
+                continue;
+            }
+            songsheet ss=new songsheet();
+            ss.setSongsheetname(item.getString("name"));
+            ss.setProducer(item.getJSONObject("creator").getString("nickname"));
+            ss.setCoverimg(item.getString("picUrl"));
+            ss.setTime(new Date(System.currentTimeMillis()));
+
+            JSONObject res=httpService.getSongBySheetId(item.getLong("id"));
+            ss.setIntroduce(res.getString("description"));
+            ss.setType(res.getJSONArray("tags").toJSONString());
+
+            Long sheetid=infoService.addsongsheet(ss);
+
+            JSONArray tracks=res.getJSONObject("playlist").getJSONArray("tracks");
+
+            for (Object d:tracks) {
+                JSONObject musicJson= (JSONObject) d;
+                String singer=musicJson.getJSONArray("ar").stream().map(f->((JSONObject)f).getString("name")).reduce((s1,s2)->s1+"&"+s2).get();
+                String name=musicJson.getString("name");
+
+                if(musicService.isExist(name,singer)){
+                    System.out.println("跳过音乐ID为："+musicJson.getString("id")+" 的数据");
+                    continue;
+                }
+
+                musicbaseinfo music=new musicbaseinfo();
+                music.setCreationdate(new Date(System.currentTimeMillis()));
+                music.setLanguage(LanguageUtil.checkLanguage('['+'"'+musicJson.getString("name"))+'"'+']');
+                music.setMusicname(musicJson.getString("name"));
+                if(musicJson.getJSONObject("al")!=null){
+                    music.setMusicimg(musicJson.getJSONObject("al").getString("picUrl"));
+                    music.setAlbum(musicJson.getJSONObject("al").getString("name"));
+                }
+                music.setMusicaddress("id="+musicJson.getString("id"));
+                music.setTime(parseTime(musicJson.getInteger("dt")));
+                music.setPlaynumber(musicJson.getLong("pop"));
+
+                music.setSinger(singer);
+                music.setLyricid(getLrcId(musicJson.getLong("id"),name));
+
+//                musicService.insertMusic(music);
+                songsheetinfo info =new songsheetinfo();
+                info.setMusicid(music.getMusicid());
+                info.setSheetid(ss.getSheetid());
+
+                infoService.insertSongSheetRelation(info);
+
+            }
+        }
+        return true;
     }
 
 }

@@ -105,4 +105,13 @@ public class HttpService {
         return HttpClientUtil.get(PathUtil.songDetail,map,false);
     }
 
+    public JSONObject getRecommedSheet(){
+        return HttpClientUtil.get(PathUtil.recommendPlayList,null,true);
+    }
+
+    public JSONObject getSongBySheetId(Long sheetid){
+        HashMap<String,String> map=new HashMap<>();
+        map.put("id",sheetid.toString());
+        return HttpClientUtil.get(PathUtil.playListDetail,map,false);
+    }
 }

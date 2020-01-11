@@ -24,12 +24,12 @@ public class SpringUtil implements ApplicationContextAware {
 
 
     //通过class获取Bean.
-    public static <T> T getBean(Class<T> clazz) {
+    public  <T> T getBean(Class<T> clazz) {
         return SpringUtil.applicationContext.getBean(clazz);
     }
 
     //通过name,以及Clazz返回指定的Bean
-    public static <T> T getBean(String name, Class<T> clazz) {
+    public  <T> T getBean(String name, Class<T> clazz) {
         return SpringUtil.applicationContext.getBean(name, clazz);
     }
 }

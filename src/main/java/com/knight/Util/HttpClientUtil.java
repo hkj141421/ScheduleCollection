@@ -25,13 +25,16 @@ public class HttpClientUtil {
     private static CustomConfig customConfig;
 
     public static JSONObject get(String url,Map<String,String> Param,boolean islogin){
+
+        SpringUtil springUtil=new SpringUtil();
+
         Response response=getResponse(url,Param,islogin);
         try {
           JSONObject jsonObject =  JSONObject.parseObject(response.body().string());
           if(jsonObject.getIntValue("code")==301)
           { //Cookie过期，登录账号，并重新获取一次
               CacheConfigUtil.setLoginCookie(null);
-              boolean res=SpringUtil.getBean(HttpService.class).login();
+              boolean res=springUtil.getBean(HttpService.class).login();
               if(res){
                   return JSONObject.parseObject(getResponse(url,Param,islogin).body().string());
               }

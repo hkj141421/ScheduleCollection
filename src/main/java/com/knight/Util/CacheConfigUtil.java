@@ -29,8 +29,9 @@ public class CacheConfigUtil {
     }
 
     public static boolean refreshCache(){
+        SpringUtil springUtil=new SpringUtil();
 //        if(customConfig==null)customConfig=SpringUtil.getBean(CustomConfig.class);
-        if (taskConfigService==null)taskConfigService=SpringUtil.getBean(ConfigService.class);
+        if (taskConfigService==null)taskConfigService=springUtil.getBean(ConfigService.class);
         try {
             taskConfigService.getAllTaskConfig().stream().forEach(scheduleTaskConfig -> cacheMap.put(scheduleTaskConfig.getTaskname(),scheduleTaskConfig));
         } catch (Exception e){

@@ -38,20 +38,6 @@ public class CollectSongTask implements Runnable{
     @Override
     public void run() {
 
-        System.out.println("开始收集音乐信息,执行时间:"+new Date(System.currentTimeMillis()));
-
-        if(httpService==null) httpService= SpringUtil.getBean(HttpService.class);
-        if(errorLogService==null)errorLogService= SpringUtil.getBean(ErrorLogService.class);
-        if(configService==null)configService= SpringUtil.getBean(ConfigService.class);
-        if(jsonDataUtil==null)jsonDataUtil= SpringUtil.getBean(JsonDataUtil.class);
-
-        boolean loginstatus=httpService.login();
-
-        if(!loginstatus) {
-            errorLogService.insertErrorLog("登录失败",this.getClass().getName());
-            return;
-        }
-
         JSONObject res=httpService.getRecommendSong();
 
         if(!(res.getIntValue("code")==200))

@@ -7,9 +7,13 @@ import com.knight.Service.ConfigService;
 import com.knight.Util.CacheConfigUtil;
 import com.knight.Util.CronUtil;
 import com.knight.Util.JsonDataUtil;
+import com.knight.Util.SpringUtil;
+import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
@@ -26,7 +30,7 @@ import java.util.List;
  * Created by forget on 2019/12/29.
  */
 @Component
-public class TaskConfig{
+public class TaskConfig implements ApplicationListener<ContextRefreshedEvent>{
 
     @Autowired
     private ConfigService configService;
@@ -40,6 +44,9 @@ public class TaskConfig{
     @Autowired
     JsonDataUtil jsonDataUtil;
 
+    @Autowired
+    SpringUtil springUtil;
+
     @PostConstruct
     public void startTask(){
         List<scheduleTaskConfig> taskConfigList = configService.getAllTaskConfig();
@@ -49,18 +56,17 @@ public class TaskConfig{
 
         if(CacheConfigUtil.getValue(customConfig.getCollectDaySongName()).getTaskstatus().equals("Y"))
         {
-            boolean res=actuator.startTask(new CollectSongTask(),customConfig.getCollectDaySongName());
+            boolean res=actuator.startTask(springUtil.getBean(CollectSongTask.class),customConfig.getCollectDaySongName());
             if (res) System.out.println("----------开启收集每日歌曲任务成功------");
             else System.out.println("----------------开启收集每日歌曲任务失败-----------------");
         }
 
-        Thread thread=new Thread(new CollectSheetTask());
+        Thread thread=new Thread(springUtil.getBean(CollectBandTaskLogin.class));
         thread.start();
     }
 
-    @PreDestroy
-    public void logout(){
-        System.out.println("销毁容器");
-    }
+    @Override
+    public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
 
+    }
 }
